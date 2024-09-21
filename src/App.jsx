@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Card from "./companents/Card";
-
 import "./App.css";
 
 function App() {
@@ -12,6 +11,13 @@ function App() {
   const [language, setLanguage] = useState([]);
   const [desc, setDesc] = useState("");
   const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const savedUsers = localStorage.getItem("users");
+    if (savedUsers) {
+      setUsers(JSON.parse(savedUsers));
+    }
+  }, []);
 
   function handleChangeName(event) {
     setName(event.target.value);
@@ -38,19 +44,22 @@ function App() {
   }
 
   function handleChangeLanguage(event) {
-    const { value, checked } = event.target;
-    if (checked) {
-      setLanguage((prevLanguages) => [...prevLanguages, value]);
+    if (event.target.checked) {
+      let copied = [...language];
+      copied.push(event.target.value);
+      setLanguage(copied);
     } else {
-      setLanguage((prevLanguages) =>
-        prevLanguages.filter((lang) => lang !== value)
-      );
+      let copied = [...language];
+      copied = copied.filter(function (value) {
+        return value !== event.target.value;
+      });
+      setLanguage(copied);
     }
   }
 
   function handleRegister(event) {
     event.preventDefault();
-    const usersForm = {
+    const user = {
       name: name,
       lastName: lastName,
       email: email,
@@ -61,10 +70,26 @@ function App() {
       id: Date.now(),
     };
 
-    setUsers((prevUsers) => [...prevUsers, usersForm]);
+    let copiedUsers = [...users];
+    copiedUsers.push(user);
+    setUsers(copiedUsers);
 
-    
+    localStorage.setItem("users", JSON.stringify(copiedUsers));
+
+    setName("");
+    setLastName("");
+    setEmail("");
+    setAge(0);
+    setDesc("");
+    setLanguage([]);
   }
+
+  function itemDelete(id) {
+    const updatedUsers = users.filter(user => user.id !== id);
+    setUsers(updatedUsers);
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
+  }
+
   return (
     <div>
       <form
@@ -81,7 +106,7 @@ function App() {
         }}
       >
         <div className="mb-3">
-          <h2 style={{ justifyContent: "center", display: "flex" }}> Users</h2>
+          <h2 style={{ justifyContent: "center", display: "flex" }}>Users</h2>
           <label htmlFor="exampleInputUserName" className="form-label">
             Your name
           </label>
@@ -155,6 +180,7 @@ function App() {
               type="checkbox"
               value="Uzbek"
               id="flexCheckDefault"
+              name="lang"
             />
             <label className="form-check-label" htmlFor="flexCheckDefault">
               Uzbek
@@ -167,6 +193,7 @@ function App() {
               type="checkbox"
               value="English"
               id="flexCheckChecked1"
+              name="lang"
             />
             <label className="form-check-label" htmlFor="flexCheckChecked1">
               English
@@ -179,6 +206,7 @@ function App() {
               type="checkbox"
               value="Russian"
               id="flexCheckChecked2"
+              name="lang"
             />
             <label className="form-check-label" htmlFor="flexCheckChecked2">
               Russian
@@ -209,17 +237,28 @@ function App() {
       </form>
 
       <div
-        className="mt-5 "
+        className="mt-5"
         style={{
           maxWidth: "1200px",
-          padding: " 20px 50px",
           width: "100%",
+          padding: "20px 50px",
           border: "1px solid black",
           borderRadius: "20px",
           margin: "0 auto",
+          display: "flex",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          gap: "50px",
         }}
       >
-        <Card users={users}></Card>
+        {users.length > 0 &&
+          users.map((value, index) => (
+            <Card
+              itemDelete={itemDelete}
+              user={value}
+              key={index}
+            />
+          ))}
       </div>
     </div>
   );
